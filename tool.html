@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Tool Demo Sicbo & TX V2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#020617;
+    color:#e5e7eb;
+}
+header{
+    text-align:center;
+    padding:16px;
+    font-size:22px;
+    font-weight:bold;
+    background:#020617;
+    color:#38bdf8;
+}
+nav{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    padding:10px;
+    background:#020617;
+}
+nav button{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:#1e293b;
+    color:#fff;
+}
+nav button:hover{background:#38bdf8;color:#000}
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+}
+.tool{
+    display:none;
+    background:#020617;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 0 12px #000;
+}
+input,textarea,button{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    border-radius:8px;
+    border:none;
+    font-size:15px;
+}
+input,textarea{background:#020617;color:#38bdf8;border:1px solid #38bdf8}
+button.action{background:#38bdf8;color:#000;font-weight:bold}
+.result{margin-top:12px;font-size:16px}
+small{color:#94a3b8}
+footer{text-align:center;font-size:13px;color:#64748b;padding:10px}
+</style>
+</head>
+
+<body>
+<header>🧠 TOOL DEMO AI (HỌC TẬP)</header>
+
+<nav>
+  <button onclick="showTool('sicbo')">🎲 Tool Sicbo AI</button>
+  <button onclick="showTool('tx')">⚡ Tool TX V2</button>
+</nav>
+
+<div class="container">
+
+<!-- TOOL SICBO -->
+<div id="sicbo" class="tool">
+<h2>🎲 Tool Sicbo AI (MD5 Demo)</h2>
+<small>Chỉ mô phỏng thuật toán – không dùng cho cờ bạc thật</small>
+
+<input id="md5input" placeholder="Nhập MD5 32 ký tự hex">
+<button class="action" onclick="analyzeMD5()">Phân tích</button>
+
+<div class="result" id="sicboResult">Kết quả: ?</div>
+</div>
+
+<!-- TOOL TX -->
+<div id="tx" class="tool">
+<h2>⚡ Tool TX V2 (Simulator)</h2>
+<small>Phân tích logic T/X từ dữ liệu giả lập</small>
+
+<input id="d1" type="number" placeholder="Xúc xắc 1">
+<input id="d2" type="number" placeholder="Xúc xắc 2">
+<input id="d3" type="number" placeholder="Xúc xắc 3">
+<button class="action" onclick="calcTX()">Phân tích</button>
+
+<div class="result" id="txResult">Kết quả: ?</div>
+
+<h3>📊 Phân tích chuỗi</h3>
+<textarea id="history" placeholder="Nhập chuỗi T/X (ví dụ: TXTXXTTXTX)"></textarea>
+<button class="action" onclick="predictPattern()">Dự đoán</button>
+<div class="result" id="patternResult">Kết quả: ?</div>
+</div>
+
+</div>
+
+<footer>
+Demo học tập • Chạy GitHub Pages
+</footer>
+
+<script>
+// ================= TAB =================
+function showTool(id){
+ document.querySelectorAll('.tool').forEach(t=>t.style.display='none');
+ document.getElementById(id).style.display='block';
+}
+showTool('sicbo');
+
+// ========== SICBO AI DEMO ==========
+const AI_RAND_BOOST_THRESHOLD = 3.5;
+const AI_RAND_BOOST_FACTOR = 15.0;
+const DEEP_ENTROPY_WEIGHT = 10.0;
+const DEEP_ENTROPY_DIFF_BASELINE = 50.0;
+const DEEP_ENTROPY_DIFF_PENALTY = 20.0;
+const DEEP_SYMMETRY_WEIGHT = 30.0;
+const DEEP_REPEAT_PENALTY_WEIGHT = 15.0;
+
+function hexEntropy(hex){
+ let freq={},total=hex.length,entropy=0;
+ for(let c of hex){freq[c]=(freq[c]||0)+1}
+ for(let k in freq){
+   let p=freq[k]/total;
+   entropy -= p*Math.log2(p);
+ }
+ return entropy;
+}
+
+function deepScore(md5){
+ let ent=hexEntropy(md5);
+ let counts={};
+ for(let c of md5) counts[c]=(counts[c]||0)+1;
+ let repeated=Object.values(counts).filter(v=>v>2).length;
+ let repPenalty=repeated/Object.keys(counts).length;
+ let half=md5.length/2;
+ let sym=0;
+ for(let i=0;i<half;i++) if(md5[i]===md5[i+half]) sym++;
+ let symmetry=sym/half;
+
+ let score=(ent*DEEP_ENTROPY_WEIGHT)+
+ (DEEP_ENTROPY_DIFF_BASELINE-ent*DEEP_ENTROPY_DIFF_PENALTY)+
+ (symmetry*DEEP_SYMMETRY_WEIGHT)-
+ (repPenalty*DEEP_REPEAT_PENALTY_WEIGHT);
+ return Math.max(0,Math.min(100,score));
+}
+
+function analyzeMD5(){
+ let md5=document.getElementById("md5input").value.trim().toLowerCase();
+ if(!/^[0-9a-f]{32}$/.test(md5)){
+   document.getElementById("sicboResult").innerText="❌ MD5 không hợp lệ";
+   return;
+ }
+ let ent=hexEntropy(md5).toFixed(3);
+ let deep=deepScore(md5).toFixed(2);
+ let predict=(ent>4.2 && deep>55)?"🔥 TÀI":"❄️ XỈU";
+ document.getElementById("sicboResult").innerText=
+ `Dự đoán: ${predict}\nEntropy: ${ent} | Deep Score: ${deep}`;
+}
+
+// ========== TX V2 ==========
+function calcTX(){
+ let d1=+d1.value,d2=+d2.value,d3=+d3.value;
+ if(!d1||!d2||!d3){txResult.innerText="⚠️ Nhập đủ 3 số";return}
+ let total=d1+d2+d3;
+ let loai=[0,2,4,6,8,10].includes(total%12)?"❄️ XỈU":"🔥 TÀI";
+ txResult.innerText=`Tổng ${total} → ${loai}`;
+}
+
+function predictPattern(){
+ let str=history.value.toUpperCase().replace(/[^TX]/g,"");
+ if(str.length<10){
+   patternResult.innerText="❌ Cần ít nhất 10 ký tự";
+   return;
+ }
+ let t=(str.match(/T/g)||[]).length;
+ let x=(str.match(/X/g)||[]).length;
+ let predict=t>=x?"🔥 TÀI":"❄️ XỈU";
+ patternResult.innerText=`Dự đoán: ${predict} (${Math.max(t,x)*10}%)`;
+}
+</script>
+</body>
+</html>
